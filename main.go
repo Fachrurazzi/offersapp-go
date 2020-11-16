@@ -34,6 +34,7 @@ func main() {
 		itemsGroup.GET("index", routes.ItemsIndex)
 		itemsGroup.POST("create", authMiddleware(), routes.ItemsCreate)
 		itemsGroup.GET("sold_by_user", authMiddleware(), routes.ItemsForSaleByCurrentUser)
+		itemsGroup.PUT("update", authMiddleware(), routes.ItemsUpdate)
 	}
 
 	router.Run(":3000")
