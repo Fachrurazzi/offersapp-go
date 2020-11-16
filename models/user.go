@@ -78,13 +78,37 @@ func (u *User) IsAuthenticated(conn *pgx.Conn) error {
 	err := rows.Scan(&u.ID, &u.PasswordHash)
 	if err == pgx.ErrNoRows {
 		fmt.Println("User with email not found")
-		return fmt.Errorf("Invalid login credintials")
+		return fmt.Errorf("Invalid login credentials")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(u.Password))
 	if err != nil {
-		return fmt.Errorf("Invalid login credintials")
+		return fmt.Errorf("Invalid login credentials")
 	}
 
 	return nil
+}
+
+func IsTokenValid(tokenString string) (bool, string) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); ok == false {
+			return nil, fmt.Errorf("Token signing method is not valid %v", token.Header["alg"])
+		}
+
+		return tokenSecret, nil
+	})
+
+	if err != nil {
+		fmt.Printf("Err %v \n", err)
+		return false, ""
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		userID := claims["user_id"]
+		return true, userID.(string)
+	} else {
+		fmt.Printf("The alg header %v\n", claims["alg"])
+		fmt.Println(err)
+		return false, "uuid.UUID{}"
+	}
 }
